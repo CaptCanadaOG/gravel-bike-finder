@@ -8,6 +8,7 @@ export interface Filters {
   brakes: string;
   wheelSize: string;
   minTireWidth: number;
+  condition: 'all' | 'new' | 'used';
 }
 
 interface Props {
@@ -37,33 +38,53 @@ export default function FilterPanel({ filters, onChange, totalCount, filteredCou
         <span className="ml-auto text-xs text-gray-400">{filteredCount} / {totalCount} Bikes</span>
       </div>
 
+      {/* Condition */}
+      <div>
+        <p className="text-sm font-semibold text-gray-700 mb-2">Zustand</p>
+        <div className="flex gap-2">
+          {[
+            { value: 'all', label: 'Alle' },
+            { value: 'new', label: '🆕 Neu' },
+            { value: 'used', label: '♻️ Gebraucht' },
+          ].map(o => (
+            <button
+              key={o.value}
+              onClick={() => set({ condition: o.value as Filters['condition'] })}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium ${
+                filters.condition === o.value
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Price */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">
           Preis: <span className="text-green-600">{filters.minPrice.toLocaleString('de-DE')} € – {filters.maxPrice.toLocaleString('de-DE')} €</span>
         </label>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-col gap-1">
           <input
             type="range"
-            min={300}
-            max={1200}
-            step={50}
+            min={300} max={1200} step={50}
             value={filters.minPrice}
             onChange={e => set({ minPrice: Math.min(+e.target.value, filters.maxPrice - 50) })}
             className="w-full accent-green-500"
           />
           <input
             type="range"
-            min={300}
-            max={1200}
-            step={50}
+            min={300} max={1200} step={50}
             value={filters.maxPrice}
             onChange={e => set({ maxPrice: Math.max(+e.target.value, filters.minPrice + 50) })}
             className="w-full accent-green-500"
           />
         </div>
         <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-          <span>300 €</span><span>1.200 €</span>
+          <span>ab 300 €</span><span>bis 1.200 €</span>
         </div>
       </div>
 
@@ -73,10 +94,7 @@ export default function FilterPanel({ filters, onChange, totalCount, filteredCou
           Max. Gewicht: <span className="text-green-600">{filters.maxWeight} kg</span>
         </label>
         <input
-          type="range"
-          min={7}
-          max={13}
-          step={0.1}
+          type="range" min={7} max={13} step={0.1}
           value={filters.maxWeight}
           onChange={e => set({ maxWeight: +e.target.value })}
           className="w-full accent-green-500"
@@ -92,10 +110,7 @@ export default function FilterPanel({ filters, onChange, totalCount, filteredCou
           Min. Reifenbreite: <span className="text-green-600">{filters.minTireWidth} mm</span>
         </label>
         <input
-          type="range"
-          min={30}
-          max={60}
-          step={5}
+          type="range" min={30} max={60} step={5}
           value={filters.minTireWidth}
           onChange={e => set({ minTireWidth: +e.target.value })}
           className="w-full accent-green-500"
@@ -167,13 +182,9 @@ export default function FilterPanel({ filters, onChange, totalCount, filteredCou
 
       <button
         onClick={() => onChange({
-          minPrice: 300,
-          maxPrice: 1200,
-          maxWeight: 13,
-          frameMaterial: materials,
-          brakes: 'Alle',
-          wheelSize: 'Alle',
-          minTireWidth: 30,
+          minPrice: 300, maxPrice: 1200, maxWeight: 13,
+          frameMaterial: materials, brakes: 'Alle',
+          wheelSize: 'Alle', minTireWidth: 30, condition: 'all',
         })}
         className="text-xs text-gray-400 hover:text-gray-600 underline text-left mt-1"
       >

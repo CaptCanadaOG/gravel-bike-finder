@@ -10,6 +10,8 @@ export interface Bike {
   model: string;
   year: number;
   price: number;
+  condition: 'new' | 'used';
+  conditionNote?: string; // z.B. "leichte Gebrauchsspuren, Kette neu"
   weight: number; // kg
   frameMaterial: 'Carbon' | 'Aluminium' | 'Stahl' | 'Titan';
   groupset: string;

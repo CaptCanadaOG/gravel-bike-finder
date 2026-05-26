@@ -44,9 +44,16 @@ export default function BikeCard({ bike, onCompare, isComparing, compareCount, s
           {bike.brand}
         </p>
 
-        <span className={`absolute top-3 left-3 text-xs font-semibold px-2 py-0.5 rounded-full ${materialColors[bike.frameMaterial]}`}>
-          {bike.frameMaterial}
-        </span>
+        <div className="absolute top-3 left-3 flex flex-col gap-1">
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${materialColors[bike.frameMaterial]}`}>
+            {bike.frameMaterial}
+          </span>
+          {bike.condition === 'used' && (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+              ♻️ Gebraucht
+            </span>
+          )}
+        </div>
 
         {showScore && scored && (
           <span className={`absolute top-3 right-3 text-xs font-bold px-2 py-0.5 rounded-full ${scoreLabel(scored.matchScore).cls}`}>
@@ -60,6 +67,13 @@ export default function BikeCard({ bike, onCompare, isComparing, compareCount, s
           <h2 className="text-lg font-bold text-gray-900 leading-tight">{bike.model}</h2>
           <p className="text-2xl font-bold text-green-600 mt-0.5">ab {lowestPrice.toLocaleString('de-DE')} €</p>
         </div>
+
+        {/* Condition note */}
+        {bike.condition === 'used' && bike.conditionNote && (
+          <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5 border border-amber-200">
+            📋 {bike.conditionNote}
+          </p>
+        )}
 
         {/* Match reasons */}
         {showScore && scored && scored.matchReasons.length > 0 && (

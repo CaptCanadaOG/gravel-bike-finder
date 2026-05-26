@@ -16,6 +16,7 @@ const defaultFilters: Filters = {
   brakes: 'Alle',
   wheelSize: 'Alle',
   minTireWidth: 30,
+  condition: 'all',
 };
 
 type SortKey = 'score' | 'price-asc' | 'price-desc' | 'weight-asc';
@@ -44,6 +45,7 @@ export default function App() {
       if (filters.brakes !== 'Alle' && b.brakes !== filters.brakes) return false;
       if (filters.wheelSize !== 'Alle' && b.wheelSize !== filters.wheelSize) return false;
       if (b.tireWidth < filters.minTireWidth) return false;
+      if (filters.condition !== 'all' && b.condition !== filters.condition) return false;
       if (search) {
         const q = search.toLowerCase();
         if (!`${b.brand} ${b.model} ${b.groupset}`.toLowerCase().includes(q)) return false;
