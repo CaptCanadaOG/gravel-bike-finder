@@ -1,13 +1,16 @@
 import { useState, useMemo } from 'react';
-import { bikes } from './data/bikes';
-import type { Bike } from './types/bike';
+import { bikes as allBikes } from './data/bikes';
+import type { Bike, UserProfile, ScoredBike } from './types/bike';
+import { scoreBikes } from './utils/recommendation';
 import BikeCard from './components/BikeCard';
 import FilterPanel, { type Filters } from './components/FilterPanel';
 import CompareDrawer from './components/CompareDrawer';
-import { Bike as BikeIcon, SlidersHorizontal, X } from 'lucide-react';
+import OnboardingForm from './components/OnboardingForm';
+import { Bike as BikeIcon, SlidersHorizontal, X, RotateCcw } from 'lucide-react';
 
 const defaultFilters: Filters = {
-  maxPrice: 8000,
+  minPrice: 300,
+  maxPrice: 1200,
   maxWeight: 13,
   frameMaterial: ['Carbon', 'Aluminium', 'Stahl', 'Titan'],
   brakes: 'Alle',
@@ -15,18 +18,26 @@ const defaultFilters: Filters = {
   minTireWidth: 30,
 };
 
-type SortKey = 'price-asc' | 'price-desc' | 'weight-asc' | 'name-asc';
+type SortKey = 'score' | 'price-asc' | 'price-desc' | 'weight-asc';
 
 export default function App() {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [scored, setScored] = useState<ScoredBike[]>([]);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [compareBikes, setCompareBikes] = useState<Bike[]>([]);
-  const [sort, setSort] = useState<SortKey>('price-asc');
+  const [sort, setSort] = useState<SortKey>('score');
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
+  const handleProfile = (p: UserProfile) => {
+    setProfile(p);
+    setScored(scoreBikes(allBikes, p));
+  };
+
   const filtered = useMemo(() => {
-    let list = bikes.filter(b => {
+    let list = scored.filter(b => {
       const lowestPrice = Math.min(...b.shopLinks.map(s => s.price ?? b.price));
+      if (lowestPrice < filters.minPrice) return false;
       if (lowestPrice > filters.maxPrice) return false;
       if (b.weight > filters.maxWeight) return false;
       if (!filters.frameMaterial.includes(b.frameMaterial)) return false;
@@ -43,13 +54,13 @@ export default function App() {
     list.sort((a, b) => {
       const aPrice = Math.min(...a.shopLinks.map(s => s.price ?? a.price));
       const bPrice = Math.min(...b.shopLinks.map(s => s.price ?? b.price));
+      if (sort === 'score') return b.matchScore - a.matchScore;
       if (sort === 'price-asc') return aPrice - bPrice;
       if (sort === 'price-desc') return bPrice - aPrice;
-      if (sort === 'weight-asc') return a.weight - b.weight;
-      return `${a.brand} ${a.model}`.localeCompare(`${b.brand} ${b.model}`);
+      return a.weight - b.weight;
     });
     return list;
-  }, [filters, sort, search]);
+  }, [scored, filters, sort, search]);
 
   const toggleCompare = (bike: Bike) => {
     setCompareBikes(prev => {
@@ -59,19 +70,23 @@ export default function App() {
     });
   };
 
+  if (!profile) {
+    return <OnboardingForm onSubmit={handleProfile} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2 mr-2">
-            <BikeIcon className="text-green-600" size={24} />
-            <span className="font-black text-xl text-gray-900">Gravel Bike Finder</span>
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <BikeIcon className="text-green-600" size={22} />
+            <span className="font-black text-lg text-gray-900 hidden sm:block">Gravel Bike Finder</span>
           </div>
 
           <input
             type="search"
-            placeholder="Suche nach Marke, Modell, Schaltgruppe…"
+            placeholder="Marke, Modell, Schaltgruppe…"
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="flex-1 min-w-0 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
@@ -82,10 +97,10 @@ export default function App() {
             onChange={e => setSort(e.target.value as SortKey)}
             className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white"
           >
+            <option value="score">Beste Übereinstimmung</option>
             <option value="price-asc">Preis ↑</option>
             <option value="price-desc">Preis ↓</option>
             <option value="weight-asc">Leichteste zuerst</option>
-            <option value="name-asc">Name A–Z</option>
           </select>
 
           <button
@@ -95,16 +110,39 @@ export default function App() {
             <SlidersHorizontal size={14} />
             Filter
           </button>
+
+          <button
+            onClick={() => { setProfile(null); setScored([]); setCompareBikes([]); }}
+            title="Neu starten"
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-xl px-3 py-2"
+          >
+            <RotateCcw size={13} />
+            Neu
+          </button>
+        </div>
+
+        {/* Profile summary bar */}
+        <div className="max-w-7xl mx-auto px-4 pb-2 flex flex-wrap gap-2">
+          {[
+            { label: `${profile.height} cm` },
+            { label: profile.experience === 'beginner' ? 'Einsteiger' : profile.experience === 'intermediate' ? 'Fortgeschritten' : 'Erfahren' },
+            { label: profile.terrain === 'road' ? 'Asphalt' : profile.terrain === 'mixed' ? 'Mix' : 'Offroad' },
+            { label: profile.priority === 'budget' ? 'Preis' : profile.priority === 'speed' ? 'Tempo' : profile.priority === 'comfort' ? 'Komfort' : 'Abenteuer' },
+          ].map(tag => (
+            <span key={tag.label} className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium">
+              {tag.label}
+            </span>
+          ))}
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
-        {/* Filter sidebar — desktop */}
+        {/* Desktop filter sidebar */}
         <div className="hidden lg:block w-64 flex-shrink-0">
           <FilterPanel
             filters={filters}
             onChange={setFilters}
-            totalCount={bikes.length}
+            totalCount={scored.length}
             filteredCount={filtered.length}
           />
         </div>
@@ -121,7 +159,7 @@ export default function App() {
               <FilterPanel
                 filters={filters}
                 onChange={setFilters}
-                totalCount={bikes.length}
+                totalCount={scored.length}
                 filteredCount={filtered.length}
               />
             </div>
@@ -134,7 +172,7 @@ export default function App() {
             <div className="text-center py-24 text-gray-400">
               <BikeIcon size={48} className="mx-auto mb-4 opacity-30" />
               <p className="text-lg font-medium">Keine Bikes gefunden</p>
-              <p className="text-sm mt-1">Versuche die Filter anzupassen</p>
+              <p className="text-sm mt-1">Filter anpassen oder <button className="underline text-green-600" onClick={() => setFilters(defaultFilters)}>zurücksetzen</button></p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -145,6 +183,7 @@ export default function App() {
                   onCompare={toggleCompare}
                   isComparing={!!compareBikes.find(b => b.id === bike.id)}
                   compareCount={compareBikes.length}
+                  showScore
                 />
               ))}
             </div>
@@ -152,7 +191,6 @@ export default function App() {
         </div>
       </main>
 
-      {/* Compare drawer */}
       <CompareDrawer
         bikes={compareBikes}
         onRemove={id => setCompareBikes(prev => prev.filter(b => b.id !== id))}

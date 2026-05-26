@@ -17,9 +17,21 @@ export interface Bike {
   tireWidth: number; // mm max
   sizes: string[];
   wheelSize: '700c' | '650b' | '700c / 650b';
-  image: string;
   shopLinks: ShopLink[];
   highlights: string[];
   stack: number; // mm
   reach: number; // mm (size M/54)
+  brandColor: string; // hex for card header
+}
+
+export interface UserProfile {
+  height: number;
+  experience: 'beginner' | 'intermediate' | 'advanced';
+  terrain: 'road' | 'mixed' | 'offroad';
+  priority: 'speed' | 'comfort' | 'adventure' | 'budget';
+}
+
+export interface ScoredBike extends Bike {
+  matchScore: number; // 0–100
+  matchReasons: string[];
 }

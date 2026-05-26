@@ -1,6 +1,7 @@
 import { Sliders } from 'lucide-react';
 
 export interface Filters {
+  minPrice: number;
   maxPrice: number;
   maxWeight: number;
   frameMaterial: string[];
@@ -39,19 +40,30 @@ export default function FilterPanel({ filters, onChange, totalCount, filteredCou
       {/* Price */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">
-          Max. Preis: <span className="text-green-600">{filters.maxPrice.toLocaleString('de-DE')} €</span>
+          Preis: <span className="text-green-600">{filters.minPrice.toLocaleString('de-DE')} € – {filters.maxPrice.toLocaleString('de-DE')} €</span>
         </label>
-        <input
-          type="range"
-          min={1000}
-          max={8000}
-          step={100}
-          value={filters.maxPrice}
-          onChange={e => set({ maxPrice: +e.target.value })}
-          className="w-full accent-green-500"
-        />
+        <div className="flex gap-2 items-center">
+          <input
+            type="range"
+            min={300}
+            max={1200}
+            step={50}
+            value={filters.minPrice}
+            onChange={e => set({ minPrice: Math.min(+e.target.value, filters.maxPrice - 50) })}
+            className="w-full accent-green-500"
+          />
+          <input
+            type="range"
+            min={300}
+            max={1200}
+            step={50}
+            value={filters.maxPrice}
+            onChange={e => set({ maxPrice: Math.max(+e.target.value, filters.minPrice + 50) })}
+            className="w-full accent-green-500"
+          />
+        </div>
         <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-          <span>1.000 €</span><span>8.000 €</span>
+          <span>300 €</span><span>1.200 €</span>
         </div>
       </div>
 
@@ -155,7 +167,8 @@ export default function FilterPanel({ filters, onChange, totalCount, filteredCou
 
       <button
         onClick={() => onChange({
-          maxPrice: 8000,
+          minPrice: 300,
+          maxPrice: 1200,
           maxWeight: 13,
           frameMaterial: materials,
           brakes: 'Alle',

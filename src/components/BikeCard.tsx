@@ -1,11 +1,12 @@
-import type { Bike } from '../types/bike';
+import type { ScoredBike, Bike } from '../types/bike';
 import { Scale, ExternalLink, Check } from 'lucide-react';
 
 interface Props {
-  bike: Bike;
+  bike: Bike | ScoredBike;
   onCompare: (bike: Bike) => void;
   isComparing: boolean;
   compareCount: number;
+  showScore?: boolean;
 }
 
 const materialColors: Record<string, string> = {
@@ -15,38 +16,67 @@ const materialColors: Record<string, string> = {
   Titan: 'bg-purple-100 text-purple-800',
 };
 
-export default function BikeCard({ bike, onCompare, isComparing, compareCount }: Props) {
+function scoreLabel(score: number) {
+  if (score >= 85) return { label: 'Top-Empfehlung', cls: 'bg-green-500 text-white' };
+  if (score >= 65) return { label: 'Gute Wahl', cls: 'bg-blue-500 text-white' };
+  if (score >= 45) return { label: 'Passend', cls: 'bg-amber-400 text-white' };
+  return { label: 'Weniger passend', cls: 'bg-gray-300 text-gray-700' };
+}
+
+export default function BikeCard({ bike, onCompare, isComparing, compareCount, showScore }: Props) {
   const lowestPrice = Math.min(...bike.shopLinks.map(s => s.price ?? bike.price));
+  const scored = 'matchScore' in bike ? bike as ScoredBike : null;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-      <div className="relative h-48 overflow-hidden bg-gray-50">
-        <img
-          src={bike.image}
-          alt={`${bike.brand} ${bike.model}`}
-          className="w-full h-full object-cover"
-        />
+      {/* Brand header — no external images */}
+      <div
+        className="h-28 flex flex-col items-center justify-center relative"
+        style={{ backgroundColor: bike.brandColor + '18', borderBottom: `3px solid ${bike.brandColor}` }}
+      >
+        <div
+          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-black text-lg"
+          style={{ backgroundColor: bike.brandColor }}
+        >
+          {bike.brand[0]}
+        </div>
+        <p className="text-xs font-bold mt-1.5 tracking-widest uppercase" style={{ color: bike.brandColor }}>
+          {bike.brand}
+        </p>
+
         <span className={`absolute top-3 left-3 text-xs font-semibold px-2 py-0.5 rounded-full ${materialColors[bike.frameMaterial]}`}>
           {bike.frameMaterial}
         </span>
-        {bike.shopLinks.length > 1 && (
-          <span className="absolute top-3 right-3 text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-            {bike.shopLinks.length} Shops
+
+        {showScore && scored && (
+          <span className={`absolute top-3 right-3 text-xs font-bold px-2 py-0.5 rounded-full ${scoreLabel(scored.matchScore).cls}`}>
+            {scoreLabel(scored.matchScore).label}
           </span>
         )}
       </div>
 
       <div className="p-4 flex flex-col flex-1 gap-3">
         <div>
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{bike.brand}</p>
           <h2 className="text-lg font-bold text-gray-900 leading-tight">{bike.model}</h2>
-          <p className="text-2xl font-bold text-green-600 mt-1">ab {lowestPrice.toLocaleString('de-DE')} €</p>
+          <p className="text-2xl font-bold text-green-600 mt-0.5">ab {lowestPrice.toLocaleString('de-DE')} €</p>
         </div>
+
+        {/* Match reasons */}
+        {showScore && scored && scored.matchReasons.length > 0 && (
+          <ul className="text-xs text-gray-500 space-y-0.5">
+            {scored.matchReasons.slice(0, 3).map(r => (
+              <li key={r} className="flex items-start gap-1">
+                <Check size={10} className="text-green-500 mt-0.5 flex-shrink-0" />
+                {r}
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-600">
           <span>⚖️ {bike.weight} kg</span>
           <span>🔧 {bike.groupset.split(' ').slice(0, 3).join(' ')}</span>
-          <span>🛞 {bike.tireWidth} mm Reifen</span>
+          <span>🛞 max. {bike.tireWidth} mm</span>
           <span>🛑 {bike.brakes}</span>
           <span>🔵 {bike.wheelSize}</span>
           <span>📐 {bike.year}</span>
@@ -92,11 +122,7 @@ export default function BikeCard({ bike, onCompare, isComparing, compareCount }:
                 : 'bg-gray-900 text-white hover:bg-gray-700'
             }`}
           >
-            {isComparing ? (
-              <><Check size={14} /> Im Vergleich</>
-            ) : (
-              <><Scale size={14} /> Vergleichen</>
-            )}
+            {isComparing ? <><Check size={14} /> Im Vergleich</> : <><Scale size={14} /> Vergleichen</>}
           </button>
         </div>
       </div>
