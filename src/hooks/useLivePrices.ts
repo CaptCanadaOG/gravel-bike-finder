@@ -9,7 +9,9 @@ export interface LivePrice {
 
 export type LivePrices = Record<string, LivePrice>;
 
-const API_URL = import.meta.env.VITE_PRICES_API_URL as string | undefined;
+const API_URL =
+  (import.meta.env.VITE_PRICES_API_URL as string | undefined) ??
+  'https://gravel-bike-prices.jan-rother.workers.dev';
 
 export function useLivePrices() {
   const [prices, setPrices] = useState<LivePrices>({});
@@ -17,11 +19,6 @@ export function useLivePrices() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (!API_URL) {
-      setStatus('error');
-      return;
-    }
-
     let cancelled = false;
     fetch(`${API_URL}/prices`)
       .then(r => {
