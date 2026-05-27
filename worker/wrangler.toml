@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 # KV namespace — ersetze die id nach: wrangler kv namespace create PRICES
 [[kv_namespaces]]
 binding = "PRICES"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "fbde04147b2b4a2cb5c62639011ed752"
 
 # Täglich um 06:00 UTC aktualisieren
 [triggers]
