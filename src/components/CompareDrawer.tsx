@@ -8,7 +8,7 @@ interface Props {
 }
 
 const rows: { label: string; key: keyof Bike | 'lowestPrice' }[] = [
-  { label: 'Preis (günstigster Shop)', key: 'lowestPrice' },
+  { label: 'Richtwert-Preis ⚠️', key: 'lowestPrice' },
   { label: 'Gewicht', key: 'weight' },
   { label: 'Rahmenmaterial', key: 'frameMaterial' },
   { label: 'Schaltgruppe', key: 'groupset' },
@@ -23,7 +23,7 @@ const rows: { label: string; key: keyof Bike | 'lowestPrice' }[] = [
 function getValue(bike: Bike, key: string): string {
   if (key === 'lowestPrice') {
     const p = Math.min(...bike.shopLinks.map(s => s.price ?? bike.price));
-    return `ab ${p.toLocaleString('de-DE')} €`;
+    return `ca. ${p.toLocaleString('de-DE')} € (Richtwert)`;
   }
   const v = bike[key as keyof Bike];
   if (Array.isArray(v)) return (v as string[]).join(', ');
@@ -97,8 +97,7 @@ export default function CompareDrawer({ bikes, onRemove, onClear }: Props) {
                           className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
                         >
                           <ExternalLink size={10} />
-                          {link.name}
-                          {link.price && ` – ${link.price.toLocaleString('de-DE')} €`}
+                          {link.name} →
                         </a>
                       ))}
                     </div>

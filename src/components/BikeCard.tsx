@@ -65,7 +65,17 @@ export default function BikeCard({ bike, onCompare, isComparing, compareCount, s
       <div className="p-4 flex flex-col flex-1 gap-3">
         <div>
           <h2 className="text-lg font-bold text-gray-900 leading-tight">{bike.model}</h2>
-          <p className="text-2xl font-bold text-green-600 mt-0.5">ab {lowestPrice.toLocaleString('de-DE')} €</p>
+          <div className="flex items-baseline gap-1.5 mt-0.5">
+            <p className="text-2xl font-bold text-green-600">
+              {bike.condition === 'used' ? '~' : 'ca.'} {lowestPrice.toLocaleString('de-DE')} €
+            </p>
+            <span className="text-xs text-gray-400">Richtwert</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {bike.condition === 'used'
+              ? 'Marktpreis variiert – Angebote im Shop prüfen'
+              : 'Aktueller Preis kann abweichen'}
+          </p>
         </div>
 
         {/* Condition note */}
@@ -118,9 +128,7 @@ export default function BikeCard({ bike, onCompare, isComparing, compareCount, s
                   <ExternalLink size={12} />
                   {link.name}
                 </span>
-                {link.price && (
-                  <span className="font-semibold">{link.price.toLocaleString('de-DE')} €</span>
-                )}
+                <span className="text-xs text-gray-400">Preis prüfen →</span>
               </a>
             ))}
           </div>
