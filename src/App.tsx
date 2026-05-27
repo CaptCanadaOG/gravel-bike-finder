@@ -2,11 +2,12 @@ import { useState, useMemo } from 'react';
 import { bikes as allBikes } from './data/bikes';
 import type { Bike, UserProfile, ScoredBike } from './types/bike';
 import { scoreBikes } from './utils/recommendation';
+import { useLivePrices } from './hooks/useLivePrices';
 import BikeCard from './components/BikeCard';
 import FilterPanel, { type Filters } from './components/FilterPanel';
 import CompareDrawer from './components/CompareDrawer';
 import OnboardingForm from './components/OnboardingForm';
-import { Bike as BikeIcon, SlidersHorizontal, X, RotateCcw } from 'lucide-react';
+import { Bike as BikeIcon, SlidersHorizontal, X, RotateCcw, RefreshCw } from 'lucide-react';
 
 const defaultFilters: Filters = {
   minPrice: 300,
@@ -22,6 +23,7 @@ const defaultFilters: Filters = {
 type SortKey = 'score' | 'price-asc' | 'price-desc' | 'weight-asc';
 
 export default function App() {
+  const { prices: livePrices, status: priceStatus, lastUpdated } = useLivePrices();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [scored, setScored] = useState<ScoredBike[]>([]);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
@@ -123,6 +125,24 @@ export default function App() {
           </button>
         </div>
 
+        {/* Live-Preis-Status */}
+        <div className="max-w-7xl mx-auto px-4 pb-1 flex items-center gap-2">
+          {priceStatus === 'loading' && (
+            <span className="flex items-center gap-1.5 text-xs text-gray-400">
+              <RefreshCw size={11} className="animate-spin" /> Preise werden geladen…
+            </span>
+          )}
+          {priceStatus === 'ok' && lastUpdated && (
+            <span className="flex items-center gap-1.5 text-xs text-green-600">
+              <RefreshCw size={11} />
+              Preise aktualisiert: {lastUpdated.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}, {lastUpdated.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
+            </span>
+          )}
+          {priceStatus === 'error' && (
+            <span className="text-xs text-amber-500">⚠️ Offline-Modus – Richtwertpreise</span>
+          )}
+        </div>
+
         {/* Profile summary bar */}
         <div className="max-w-7xl mx-auto px-4 pb-2 flex flex-wrap gap-2">
           {[
@@ -182,6 +202,7 @@ export default function App() {
                 <BikeCard
                   key={bike.id}
                   bike={bike}
+                  livePrice={livePrices[bike.id]}
                   onCompare={toggleCompare}
                   isComparing={!!compareBikes.find(b => b.id === bike.id)}
                   compareCount={compareBikes.length}

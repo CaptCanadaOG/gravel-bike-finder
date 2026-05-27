@@ -1,8 +1,10 @@
 import type { ScoredBike, Bike } from '../types/bike';
-import { Scale, ExternalLink, Check } from 'lucide-react';
+import type { LivePrice } from '../hooks/useLivePrices';
+import { Scale, ExternalLink, Check, RefreshCw } from 'lucide-react';
 
 interface Props {
   bike: Bike | ScoredBike;
+  livePrice?: LivePrice;
   onCompare: (bike: Bike) => void;
   isComparing: boolean;
   compareCount: number;
@@ -23,13 +25,25 @@ function scoreLabel(score: number) {
   return { label: 'Weniger passend', cls: 'bg-gray-300 text-gray-700' };
 }
 
-export default function BikeCard({ bike, onCompare, isComparing, compareCount, showScore }: Props) {
-  const lowestPrice = Math.min(...bike.shopLinks.map(s => s.price ?? bike.price));
+function formatUpdated(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffH = Math.round((now.getTime() - d.getTime()) / 3_600_000);
+  if (diffH < 1) return 'gerade eben';
+  if (diffH < 24) return `vor ${diffH} Std.`;
+  const diffD = Math.round(diffH / 24);
+  return `vor ${diffD} Tag${diffD > 1 ? 'en' : ''}`;
+}
+
+export default function BikeCard({ bike, livePrice, onCompare, isComparing, compareCount, showScore }: Props) {
+  const staticPrice = Math.min(...bike.shopLinks.map(s => s.price ?? bike.price));
+  const displayPrice = livePrice ? livePrice.price : staticPrice;
+  const priceIsLive = !!livePrice && livePrice.source === 'live';
   const scored = 'matchScore' in bike ? bike as ScoredBike : null;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-      {/* Brand header — no external images */}
+      {/* Brand header */}
       <div
         className="h-28 flex flex-col items-center justify-center relative"
         style={{ backgroundColor: bike.brandColor + '18', borderBottom: `3px solid ${bike.brandColor}` }}
@@ -65,17 +79,37 @@ export default function BikeCard({ bike, onCompare, isComparing, compareCount, s
       <div className="p-4 flex flex-col flex-1 gap-3">
         <div>
           <h2 className="text-lg font-bold text-gray-900 leading-tight">{bike.model}</h2>
-          <div className="flex items-baseline gap-1.5 mt-0.5">
+
+          {/* Preis-Block */}
+          <div className="flex items-baseline gap-2 mt-0.5">
             <p className="text-2xl font-bold text-green-600">
-              {bike.condition === 'used' ? '~' : 'ca.'} {lowestPrice.toLocaleString('de-DE')} €
+              {displayPrice.toLocaleString('de-DE')} €
             </p>
-            <span className="text-xs text-gray-400">Richtwert</span>
+            {priceIsLive ? (
+              <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                <RefreshCw size={10} />
+                Live · {formatUpdated(livePrice!.updatedAt)}
+              </span>
+            ) : bike.condition === 'used' ? (
+              <span className="text-xs text-gray-400">Marktrichtwert</span>
+            ) : (
+              <span className="text-xs text-amber-500">Richtwert</span>
+            )}
           </div>
-          <p className="text-xs text-gray-400 mt-0.5">
-            {bike.condition === 'used'
-              ? 'Marktpreis variiert – Angebote im Shop prüfen'
-              : 'Aktueller Preis kann abweichen'}
-          </p>
+
+          {/* Subtext */}
+          {!priceIsLive && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              {bike.condition === 'used'
+                ? 'Marktpreis variiert – Angebote im Shop prüfen'
+                : 'Preis wird täglich aktualisiert, sobald Worker aktiv'}
+            </p>
+          )}
+          {priceIsLive && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              Direkt vom Shop abgerufen · {livePrice!.shopName}
+            </p>
+          )}
         </div>
 
         {/* Condition note */}
@@ -128,7 +162,7 @@ export default function BikeCard({ bike, onCompare, isComparing, compareCount, s
                   <ExternalLink size={12} />
                   {link.name}
                 </span>
-                <span className="text-xs text-gray-400">Preis prüfen →</span>
+                <span className="text-xs text-gray-400">Zum Shop →</span>
               </a>
             ))}
           </div>

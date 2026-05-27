@@ -1,0 +1,17 @@
+name = "gravel-bike-prices"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# KV namespace — ersetze die id nach: wrangler kv namespace create PRICES
+[[kv_namespaces]]
+binding = "PRICES"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+# Täglich um 06:00 UTC aktualisieren
+[triggers]
+crons = ["0 6 * * *"]
+
+[vars]
+# Ersetze mit deiner Cloudflare Pages URL
+CORS_ORIGIN = "https://gravel-bike-finder.pages.dev"
